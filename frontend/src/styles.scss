@@ -1,0 +1,29 @@
+html {
+  min-width: 320px;
+  scroll-behavior: smooth;
+}
+
+body {
+  min-width: 320px;
+  margin: 0;
+  background: #f5f4ee;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+.startup-error {
+  margin: 1rem;
+  border: 1px solid #c88d83;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  background: #f8e8e3;
+  color: #56231e;
+  font:
+    700 1rem/1.5 'Segoe UI',
+    Arial,
+    sans-serif;
+}

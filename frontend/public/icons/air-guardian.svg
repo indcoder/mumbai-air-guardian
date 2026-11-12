@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title">
+  <title id="title">Air Guardian</title>
+  <rect width="512" height="512" rx="112" fill="#185f59"/>
+  <path d="M92 342h328" fill="none" stroke="#f0df83" stroke-linecap="round" stroke-width="24"/>
+  <text x="256" y="286" fill="#fffefa" font-family="Aptos,Segoe UI,Arial,sans-serif" font-size="154" font-weight="800" letter-spacing="-8" text-anchor="middle">AG</text>
+</svg>

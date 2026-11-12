@@ -1,0 +1,26 @@
+# Competition data: redistribution rights unconfirmed
+/zindi_artifacts/
+
+# Local agent tooling
+/.agents/
+/skills-lock.json
+/frontend/.impeccable/
+
+# Build output and dependencies
+node_modules/
+dist/
+.angular/
+coverage/
+*.exe
+*.test
+*.out
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+
+# OS and editor files
+.DS_Store
+Thumbs.db
+.idea/

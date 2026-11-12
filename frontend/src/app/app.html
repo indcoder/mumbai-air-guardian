@@ -1,0 +1,832 @@
+<a class="skip-link" href="#main-content">{{ t('skip.main') }}</a>
+
+<header class="site-header">
+  <a class="brand" href="#main-content">
+    <span class="brand-mark" aria-hidden="true">AG</span>
+    <span>Air Guardian <span class="brand-divider" aria-hidden="true">/</span> Mumbai</span>
+  </a>
+  <label class="language-select" for="language-choice">
+    <span>{{ t('language.label') }}</span>
+    <select id="language-choice" [value]="locale.current()" (change)="changeLanguage($event)">
+      <option value="en">{{ t('language.english') }}</option>
+      <option value="mr">{{ t('language.marathi') }}</option>
+      <option value="hi">{{ t('language.hindi') }}</option>
+    </select>
+  </label>
+  <p class="snapshot-chip">
+    <span class="status-dot" aria-hidden="true"></span>
+    {{ sources() ? t('snapshot.challenge') : t('header.snapshotLoading') }}
+  </p>
+</header>
+
+<main id="main-content" tabindex="-1">
+  @if (locale.error(); as error) {
+    <p class="alert alert-error" role="alert">{{ error }}</p>
+  }
+  <section class="intro" aria-labelledby="page-title">
+    <div>
+      <p class="eyebrow">{{ t('intro.eyebrow') }}</p>
+      <h1 id="page-title">{{ t('intro.title') }}</h1>
+      <p class="intro-copy">{{ t('intro.body') }}</p>
+    </div>
+    <div class="intro-meta">
+      <span class="meta-label">{{ t('intro.window') }}</span>
+      <strong>
+        {{ sources() ? t('snapshot.latestObservation') : t('intro.metadataLoading') }}
+      </strong>
+      <span>{{ forecastIssueTime() }}</span>
+    </div>
+  </section>
+
+  @if (dashboardError(); as error) {
+    <div class="alert alert-error" role="alert">
+      <div>
+        <strong>{{ t('dashboard.errorTitle') }}</strong>
+        <p>{{ error }}</p>
+      </div>
+      <button class="button button-outline" type="button" (click)="refresh()">
+        {{ t('action.retry') }}
+      </button>
+    </div>
+  }
+
+  @if (offlineStatus(); as status) {
+    <p class="offline-notice" role="status" aria-live="polite">{{ status }}</p>
+  }
+
+  <section class="station-panel panel" aria-labelledby="station-heading">
+    <div class="section-heading">
+      <div>
+        <p class="eyebrow">{{ t('station.eyebrow') }}</p>
+        <h2 id="station-heading">{{ t('station.heading') }}</h2>
+      </div>
+      <label class="station-select" for="station-choice">
+        <span>{{ t('station.selected') }}</span>
+        <select id="station-choice" (change)="onStationChange($event)">
+          @for (station of stations(); track station.locationId) {
+            <option
+              [value]="station.locationId"
+              [selected]="station.locationId === selectedStationId()"
+            >
+              {{ station.name }} · {{ station.locationId }}
+            </option>
+          }
+        </select>
+      </label>
+    </div>
+
+    @if (selectedStation(); as station) {
+      <div class="station-summary">
+        <div>
+          <strong>{{ station.name }}</strong>
+          <span>{{ t('station.summary', { stationId: station.locationId, sensorId: station.sensorId }) }}</span>
+        </div>
+        <span class="coordinate-label">
+          {{ formatCoordinate(station.latitude) }}, {{ formatCoordinate(station.longitude) }} ·
+          {{ station.timezone }}
+        </span>
+      </div>
+    }
+
+    <figure class="station-locator">
+      <svg
+        viewBox="0 0 100 100"
+        role="img"
+        aria-labelledby="locator-title locator-description"
+        preserveAspectRatio="xMidYMid meet"
+      >
+        <title id="locator-title">{{ t('station.locatorTitle') }}</title>
+        <desc id="locator-description">
+          {{ t('station.locatorDescription') }}
+        </desc>
+        <path
+          class="locator-coastline"
+          d="M 19 4 C 35 15, 25 28, 43 40 S 48 63, 65 72 S 76 88, 85 98"
+        />
+        <path
+          class="locator-grid"
+          d="M 8 25 H 92 M 8 50 H 92 M 8 75 H 92 M 25 8 V 92 M 50 8 V 92 M 75 8 V 92"
+        />
+        @for (marker of stationMarkers(); track marker.locationId) {
+          <g [class.selected-marker]="marker.selected">
+            <circle
+              [attr.cx]="marker.x"
+              [attr.cy]="marker.y"
+              [attr.r]="marker.selected ? 3.2 : 2.4"
+            />
+            <text [attr.x]="marker.x + 3.2" [attr.y]="marker.y - 2">{{ marker.locationId }}</text>
+          </g>
+        }
+      </svg>
+      <figcaption>
+        {{ t('station.locatorCaption') }}
+      </figcaption>
+    </figure>
+  </section>
+
+  <section class="outlook-section" aria-labelledby="outlook-heading">
+    <div class="section-heading section-heading-tight">
+      <div>
+        <p class="eyebrow">{{ t('outlook.eyebrow') }}</p>
+        <h2 id="outlook-heading">{{ t('outlook.heading') }}</h2>
+      </div>
+      <button
+        class="button button-outline"
+        type="button"
+        (click)="refresh()"
+        [attr.aria-busy]="dashboardLoading()"
+      >
+        {{ dashboardLoading() ? t('outlook.refreshing') : t('outlook.refresh') }}
+      </button>
+    </div>
+
+    @if (dashboardLoading()) {
+      <p class="loading-note" role="status">
+        {{ t('outlook.loading') }}
+      </p>
+    }
+
+    @if (outlook(); as currentOutlook) {
+      <div class="metric-grid">
+        <article class="metric-card">
+          <span class="metric-label">{{ t('metric.latest') }}</span>
+          @if (currentOutlook.latestObservation; as latest) {
+            <strong class="metric-value">{{ formatConcentration(latest.pm25) }}</strong>
+            @if (latest.flagHigh1000) {
+              <span class="status status-caution">{{ t('metric.flagged') }}</span>
+            } @else if (currentOutlook.observationBand; as observationBand) {
+              <span
+                class="status"
+                [class]="`status-${observationBand.name}`"
+                [style.border-color]="observationBand.color"
+              >
+                {{ t('risk.band', { risk: riskLabel(observationBand.name) }) }}
+              </span>
+            }
+            <span class="metric-detail"
+              >{{ formatTime(latest.intervalEnd) }} {{ t('metric.intervalEnd') }}</span
+            >
+          } @else {
+            <strong class="metric-value">{{ t('metric.unavailable') }}</strong>
+            <span class="metric-detail">{{ t('metric.noObservation') }}</span>
+          }
+        </article>
+
+        <article class="metric-card">
+          <span class="metric-label">{{ t('metric.peak') }}</span>
+          <strong class="metric-value">{{
+            formatConcentration(currentOutlook.peak.valuePm25)
+          }}</strong>
+          <span
+            class="status"
+            [class]="`status-${currentOutlook.peak.band.name}`"
+            [style.border-color]="currentOutlook.peak.band.color"
+          >
+            {{ t('risk.band', { risk: riskLabel(currentOutlook.peak.band.name) }) }}
+          </span>
+          <span class="metric-detail">{{ t('metric.acrossForecast') }}</span>
+        </article>
+
+        <article class="metric-card">
+          <span class="metric-label">{{ t('metric.minimum') }}</span>
+          <strong class="metric-value">{{
+            formatConcentration(currentOutlook.lowest.valuePm25)
+          }}</strong>
+          <span
+            class="status"
+            [class]="`status-${currentOutlook.lowest.band.name}`"
+            [style.border-color]="currentOutlook.lowest.band.color"
+          >
+            {{ t('risk.band', { risk: riskLabel(currentOutlook.lowest.band.name) }) }}
+          </span>
+          <span class="metric-detail">{{ t('metric.acrossForecast') }}</span>
+        </article>
+
+        <article class="metric-card metric-trajectory">
+          <span class="metric-label">{{ t('metric.trajectory') }}</span>
+          <strong class="metric-value">{{
+            trajectoryLabel(currentOutlook.trajectory.status)
+          }}</strong>
+          <span class="metric-detail">
+            @if (currentOutlook.trajectory.slopeUgM3PerHour !== undefined) {
+              {{ formatNumber(currentOutlook.trajectory.slopeUgM3PerHour) }} µg/m³ /
+              {{ t('metric.hour') }}
+            } @else {
+              {{ t('metric.noTrend') }}
+            }
+          </span>
+          <span class="metric-detail">
+            {{ t('metric.points', { count: formatNumber(currentOutlook.trajectory.pointsUsed) }) }}
+            {{
+              currentOutlook.trajectory.partialCoverage
+                ? t('metric.partial')
+                : t('metric.complete')
+            }}
+          </span>
+        </article>
+      </div>
+
+      <section class="chart-panel panel" aria-labelledby="chart-heading">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">{{ selectedStation()?.name ?? t('chart.stationSelected') }}</p>
+            <h3 id="chart-heading">{{ t('chart.title') }}</h3>
+            <p class="panel-description">{{ t('chart.description') }}</p>
+          </div>
+          <p class="chart-range">{{ chart().rangeLabel }}</p>
+        </div>
+
+        <div class="chart-legend" aria-hidden="true">
+          <span><i class="legend-swatch legend-observation"></i>{{ t('chart.observed') }}</span>
+          <span><i class="legend-swatch legend-forecast"></i>{{ t('chart.forecast') }}</span>
+          <span><i class="legend-swatch legend-threshold"></i>{{ t('chart.thresholds') }}</span>
+        </div>
+
+        @if (chart().segments.length > 0) {
+          <figure
+            class="chart-figure"
+            role="region"
+            [attr.aria-label]="t('chart.figureLabel')"
+            tabindex="0"
+          >
+            <svg
+              class="air-chart"
+              viewBox="0 0 1000 310"
+              role="img"
+              aria-labelledby="chart-svg-title chart-svg-description"
+              preserveAspectRatio="none"
+            >
+              <title id="chart-svg-title">
+                {{ t('chart.svgTitle', { station: selectedStation()?.name ?? '' }) }}
+              </title>
+              <desc id="chart-svg-description">
+                {{ t('chart.svgDescription') }}
+              </desc>
+              <line class="axis-line" x1="70" y1="35" x2="70" y2="255" />
+              <line class="axis-line" x1="70" y1="255" x2="970" y2="255" />
+              @for (threshold of chart().thresholds; track threshold.value) {
+                <line
+                  class="threshold-line"
+                  x1="70"
+                  [attr.y1]="threshold.y"
+                  x2="970"
+                  [attr.y2]="threshold.y"
+                />
+                <text class="axis-label" x="8" [attr.y]="threshold.y + 4">
+                  {{ formatNumber(threshold.value) }}
+                </text>
+              }
+              <text class="axis-label" x="35" y="259">0</text>
+              <text class="axis-title" x="12" y="22">µg/m³</text>
+              @for (tick of chart().ticks; track $index) {
+                <line class="tick-line" [attr.x1]="tick.x" y1="255" [attr.x2]="tick.x" y2="260" />
+                <text class="axis-label tick-label" [attr.x]="tick.x" y="281" text-anchor="middle">
+                  {{ tick.label }}
+                </text>
+              }
+              @for (segment of chart().segments; track segment.id) {
+                <path [class]="`series-line series-${segment.kind}`" [attr.d]="segment.path" />
+                @for (point of segment.points; track $index) {
+                  <circle
+                    [class]="`series-point series-${segment.kind}`"
+                    [attr.cx]="point.x"
+                    [attr.cy]="point.y"
+                    r="2.1"
+                    aria-hidden="true"
+                  >
+                    <title>{{ point.description }}</title>
+                  </circle>
+                }
+              }
+            </svg>
+            <figcaption class="chart-caption">
+              {{ t('chart.caption') }}
+            </figcaption>
+          </figure>
+        } @else {
+          <p class="empty-state">
+            {{ t('chart.empty') }}
+          </p>
+        }
+
+        @if (excludedFlaggedCount() > 0) {
+          <p class="quality-note" role="note">
+            {{ t('chart.flaggedCount', { count: formatNumber(excludedFlaggedCount()) }) }}
+          </p>
+        }
+
+        <details class="data-details">
+          <summary>
+            {{ t('chart.tableSummary', { count: formatNumber(chartRows().length) }) }}
+          </summary>
+          <div
+            class="table-scroll"
+            role="region"
+            [attr.aria-label]="t('chart.tableLabel')"
+            tabindex="0"
+          >
+            <table>
+              <caption>
+                {{ t('chart.tableCaption', { station: selectedStation()?.name ?? t('chart.stationSelected') }) }}
+              </caption>
+              <thead>
+                <tr>
+                  <th scope="col">{{ t('chart.colType') }}</th>
+                  <th scope="col">{{ t('chart.colStart') }}</th>
+                  <th scope="col">{{ t('chart.colEnd') }}</th>
+                  <th scope="col">{{ t('chart.colPm25') }}</th>
+                  <th scope="col">{{ t('chart.colNote') }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (row of chartRows(); track row.type + row.start) {
+                  <tr>
+                    <th scope="row">{{ row.type }}</th>
+                    <td>{{ formatTime(row.start) }}</td>
+                    <td>{{ formatTime(row.end) }}</td>
+                    <td>{{ formatConcentration(row.value) }}</td>
+                    <td>{{ row.flag }}</td>
+                  </tr>
+                } @empty {
+                  <tr>
+                    <td colspan="5">{{ t('chart.noData') }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </details>
+      </section>
+    }
+  </section>
+
+  <section class="planner-section panel" aria-labelledby="planner-heading">
+    <div class="section-heading">
+      <div>
+        <p class="eyebrow">{{ t('planner.eyebrow') }}</p>
+        <h2 id="planner-heading">{{ t('planner.heading') }}</h2>
+        <p class="panel-description">{{ t('planner.description') }}</p>
+      </div>
+      <span class="status status-neutral">
+        {{ t('planner.capability') }}
+      </span>
+    </div>
+
+    <form class="planner-form" (submit)="submitPlan($event)" novalidate>
+      <p class="required-note"><span aria-hidden="true">*</span> {{ t('planner.required') }}</p>
+      <div class="form-grid">
+        <div class="field">
+          <label for="activityType">{{ t('form.activity') }} <span aria-hidden="true">*</span></label>
+          <select
+            id="activityType"
+            name="activityType"
+            required
+            aria-required="true"
+            (change)="updateFormValue('activityType', $event)"
+            (blur)="onFieldBlur($event, 'activityType')"
+            [attr.aria-invalid]="fieldError('activityType') ? 'true' : null"
+            [attr.aria-describedby]="
+              fieldError('activityType') ? 'activity-help activity-error' : 'activity-help'
+            "
+          >
+            <option value="outdoor exercise" [selected]="activityType() === 'outdoor exercise'">
+              {{ t('form.outdoorExercise') }}
+            </option>
+            <option value="walk" [selected]="activityType() === 'walk'">{{ t('form.walk') }}</option>
+            <option value="commute" [selected]="activityType() === 'commute'">{{ t('form.commute') }}</option>
+          </select>
+          <small id="activity-help">{{ t('form.activityHelp') }}</small>
+          @if (fieldError('activityType'); as error) {
+            <span class="field-error" id="activity-error">{{ error }}</span>
+          }
+        </div>
+
+        <div class="field">
+          <label for="planDate">{{ t('form.date') }} <span aria-hidden="true">*</span></label>
+          <input
+            id="planDate"
+            name="planDate"
+            type="date"
+            required
+            aria-required="true"
+            [value]="planDate()"
+            (input)="updateFormValue('planDate', $event)"
+            (blur)="onFieldBlur($event, 'planDate')"
+            [attr.aria-invalid]="fieldError('planDate') ? 'true' : null"
+            [attr.aria-describedby]="fieldError('planDate') ? 'date-help date-error' : 'date-help'"
+          />
+          <small id="date-help"
+            >{{ t('form.dateHelp') }}</small
+          >
+          @if (fieldError('planDate'); as error) {
+            <span class="field-error" id="date-error">{{ error }}</span>
+          }
+        </div>
+
+        <div class="field">
+          <label for="earliestStart">{{ t('form.earliest') }} <span aria-hidden="true">*</span></label>
+          <select
+            id="earliestStart"
+            name="earliestStart"
+            required
+            aria-required="true"
+            (change)="updateFormValue('earliestStart', $event)"
+            (blur)="onFieldBlur($event, 'earliestStart')"
+            [attr.aria-invalid]="fieldError('earliestStart') ? 'true' : null"
+            [attr.aria-describedby]="
+              fieldError('earliestStart') ? 'start-help start-error' : 'start-help'
+            "
+          >
+            @for (time of timeOptions; track time) {
+              <option [value]="time" [selected]="time === earliestStart()">
+                {{ formatClockLabel(time) }}
+              </option>
+            }
+          </select>
+          <small id="start-help">{{ t('form.earliestHelp') }}</small>
+          @if (fieldError('earliestStart'); as error) {
+            <span class="field-error" id="start-error">{{ error }}</span>
+          }
+        </div>
+
+        <div class="field">
+          <label for="latestEnd">{{ t('form.latest') }} <span aria-hidden="true">*</span></label>
+          <select
+            id="latestEnd"
+            name="latestEnd"
+            required
+            aria-required="true"
+            (change)="updateFormValue('latestEnd', $event)"
+            (blur)="onFieldBlur($event, 'latestEnd')"
+            [attr.aria-invalid]="fieldError('latestEnd') ? 'true' : null"
+            [attr.aria-describedby]="fieldError('latestEnd') ? 'end-help end-error' : 'end-help'"
+          >
+            @for (time of endTimeOptions; track time) {
+              <option [value]="time" [selected]="time === latestEnd()">
+                {{ formatClockLabel(time) }}
+              </option>
+            }
+          </select>
+          <small id="end-help">{{ t('form.latestHelp') }}</small>
+          @if (fieldError('latestEnd'); as error) {
+            <span class="field-error" id="end-error">{{ error }}</span>
+          }
+        </div>
+
+        <div class="field">
+          <label for="durationMinutes">{{ t('form.duration') }} <span aria-hidden="true">*</span></label>
+          <select
+            id="durationMinutes"
+            name="durationMinutes"
+            required
+            aria-required="true"
+            (change)="updateFormValue('durationMinutes', $event)"
+            (blur)="onFieldBlur($event, 'durationMinutes')"
+            [attr.aria-invalid]="fieldError('durationMinutes') ? 'true' : null"
+            [attr.aria-describedby]="
+              fieldError('durationMinutes') ? 'duration-help duration-error' : 'duration-help'
+            "
+          >
+            @for (duration of durationOptions; track duration.value) {
+              <option [value]="duration.value" [selected]="duration.value === durationMinutes()">
+                {{ t(duration.labelKey) }}
+              </option>
+            }
+          </select>
+          <small id="duration-help">{{ t('form.durationHelp') }}</small>
+          @if (fieldError('durationMinutes'); as error) {
+            <span class="field-error" id="duration-error">{{ error }}</span>
+          }
+        </div>
+
+        <div class="field">
+          <label for="preferredStartTime">{{ t('form.preferred') }}</label>
+          <select
+            id="preferredStartTime"
+            name="preferredStartTime"
+            (change)="updateFormValue('preferredStartTime', $event)"
+            (blur)="onFieldBlur($event, 'preferredStartTime')"
+            [attr.aria-describedby]="
+              fieldError('preferredStartTime') ? 'preferred-help preferred-error' : 'preferred-help'
+            "
+          >
+            <option value="" [selected]="preferredStartTime() === ''">
+              {{ t('form.noPreferred') }}
+            </option>
+            @for (time of timeOptions; track time) {
+              <option [value]="time" [selected]="time === preferredStartTime()">
+                {{ formatClockLabel(time) }}
+              </option>
+            }
+          </select>
+          <small id="preferred-help"
+            >{{ t('form.preferredHelp') }}</small
+          >
+          @if (fieldError('preferredStartTime'); as error) {
+            <span class="field-error" id="preferred-error">{{ error }}</span>
+          }
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button class="button button-primary" type="submit" [attr.aria-busy]="planLoading()">
+          {{ planLoading() ? t('form.finding') : t('form.find') }}
+        </button>
+        <p class="form-note">
+          {{ t('form.note') }}
+        </p>
+      </div>
+      <p class="sr-only" aria-live="polite">{{ planAnnouncement() }}</p>
+    </form>
+
+    @if (planError(); as error) {
+      <div class="alert alert-error" role="alert">
+        <div>
+          <strong>{{ t('plan.errorTitle') }}</strong>
+          <p>{{ error }}</p>
+        </div>
+      </div>
+    }
+
+    @if (planResult(); as result) {
+      <article class="plan-result" aria-labelledby="plan-result-heading">
+        <div class="result-heading">
+          <div>
+            <p class="eyebrow">{{ t('plan.eyebrow') }}</p>
+            <h3 id="plan-result-heading">{{ t('plan.title') }}</h3>
+          </div>
+          <span class="status status-neutral"
+            >{{ t('plan.resolution', { minutes: formatNumber(result.resolutionMinutes) }) }}</span
+          >
+        </div>
+        <p class="recommendation-time">
+          {{ formatTime(result.recommendedPeriod.start) }} –
+          {{ formatTime(result.recommendedPeriod.end) }}
+        </p>
+        <p class="recommendation-detail">
+          {{ t('plan.mean') }}
+          <strong>{{ formatConcentration(result.recommendedPeriod.meanPm25) }}</strong>
+          {{ t('plan.intervals', { count: formatNumber(result.recommendedPeriod.coverageHours) }) }}
+        </p>
+        @if (result.comparison; as comparison) {
+          <div class="comparison-note">
+            <strong>{{ t('plan.comparison') }}</strong>
+            <span>
+              {{ formatTime(comparison.preferredPeriod.start) }} –
+              {{ formatTime(comparison.preferredPeriod.end) }}:
+              {{ t('plan.comparisonValue', {
+                mean: formatConcentration(comparison.preferredPeriod.meanPm25),
+                difference: formatSignedNumber(comparison.differencePm25)
+              }) }}
+            </span>
+          </div>
+        }
+        <p class="result-disclaimer">
+          {{ t('plan.disclaimer') }}
+        </p>
+        <p class="offline-status" role="status" aria-live="polite">{{ savedPlanStatus() }}</p>
+        <details class="share-preview">
+          <summary>{{ t('plan.preview') }}</summary>
+          <pre>{{ planSummaryText() }}</pre>
+        </details>
+        <div class="share-actions">
+          <button class="button button-outline" type="button" (click)="sharePlan()">
+            {{ t('plan.share') }}
+          </button>
+          <button class="button button-outline" type="button" (click)="copyPlanSummary()">
+            {{ t('plan.copy') }}
+          </button>
+        </div>
+        <p class="share-status" role="status" aria-live="polite">{{ shareStatus() }}</p>
+        <div class="explanation-action">
+          <button
+            class="button button-outline"
+            type="button"
+            [disabled]="explanationLoading()"
+            [attr.aria-busy]="explanationLoading()"
+            (click)="requestExplanation()"
+          >
+            {{ explanationLoading() ? t('plan.explaining') : t('plan.explain') }}
+          </button>
+          <p>{{ t('plan.explanationHelp') }}</p>
+        </div>
+        <p class="explanation-status" role="status" aria-live="polite">
+          {{ explanationAnnouncement() }}
+        </p>
+        @if (explanationError(); as error) {
+          <p class="explanation-error" role="alert">{{ error }}</p>
+        }
+        @if (explanationResult(); as explanation) {
+          <p class="offline-status">{{ savedExplanationStatus() }}</p>
+          <section
+            class="explanation-result"
+            aria-labelledby="explanation-heading"
+            [attr.lang]="explanation.explanation.language"
+          >
+            <div class="result-heading">
+              <h3 id="explanation-heading">{{ t('plan.explanationTitle') }}</h3>
+              <span class="status status-neutral">{{ explanationModeLabel(explanation) }}</span>
+            </div>
+            <p>{{ explanation.explanation.summary }}</p>
+            <h4>{{ t('plan.keySignals') }}</h4>
+            <ul>
+              @for (signal of explanation.explanation.keySignals; track signal) {
+                <li>{{ signal }}</li>
+              }
+            </ul>
+            <h4>{{ t('plan.suggestedAction') }}</h4>
+            <p>{{ explanation.explanation.recommendedAction }}</p>
+            <h4>{{ t('plan.limitations') }}</h4>
+            <p>{{ explanation.explanation.limitations }}</p>
+          </section>
+        }
+      </article>
+    }
+  </section>
+
+  <section class="beacon-panel panel" aria-labelledby="beacon-heading">
+    <div class="section-heading">
+      <div>
+        <p class="eyebrow">{{ t('beacon.eyebrow') }}</p>
+        <h2 id="beacon-heading">{{ t('beacon.heading') }}</h2>
+        <p class="panel-description">{{ t('beacon.description') }}</p>
+      </div>
+      <span class="status status-neutral">{{ t('beacon.simulated') }}</span>
+    </div>
+
+    <div class="beacon-option">
+      <input
+        id="beacon-steady-only"
+        type="checkbox"
+        [checked]="beaconSteadyOnly()"
+        aria-describedby="beacon-steady-help"
+        (change)="updateBeaconSteadyOnly($event)"
+      />
+      <div>
+        <label for="beacon-steady-only">{{ t('beacon.steadyOnly') }}</label>
+        <small id="beacon-steady-help">{{ t('beacon.steadyHelp') }}</small>
+      </div>
+    </div>
+
+    <div class="beacon-actions">
+      <button
+        class="button button-outline"
+        type="button"
+        [disabled]="beaconLoading() || !selectedStation()"
+        [attr.aria-busy]="beaconLoading()"
+        (click)="previewBeacon(false)"
+      >
+        {{ beaconLoading() ? t('beacon.loading') : t('beacon.preview') }}
+      </button>
+      <button
+        class="button button-outline"
+        type="button"
+        [disabled]="beaconLoading() || !selectedStation()"
+        [attr.aria-busy]="beaconLoading()"
+        (click)="previewBeacon(true)"
+      >
+        {{ t('beacon.test') }}
+      </button>
+    </div>
+    <p class="beacon-announcement" role="status" aria-live="polite">
+      {{ beaconAnnouncement() }}
+    </p>
+    @if (beaconError(); as error) {
+      <p class="alert-error beacon-error" role="alert">
+        {{ t('beacon.error', { detail: error }) }}
+      </p>
+    }
+
+    @if (beaconResult()?.lastPayload; as payload) {
+      <article class="beacon-result" aria-labelledby="beacon-result-heading">
+        <div class="beacon-result-heading">
+          <span
+            class="beacon-light"
+            [style.--beacon-color]="beaconColor(payload)"
+            aria-hidden="true"
+          ></span>
+          <div>
+            <h3 id="beacon-result-heading">{{ t('beacon.resultHeading') }}</h3>
+            <p>{{ t('beacon.resultNote') }}</p>
+          </div>
+        </div>
+        <dl class="beacon-details">
+          <div>
+            <dt>{{ t('beacon.station') }}</dt>
+            <dd>{{ payload.stationId }}</dd>
+          </div>
+          <div>
+            <dt>{{ t('beacon.forecastPeak') }}</dt>
+            <dd>{{ formatConcentration(payload.pm25) }} · {{ riskLabel(payload.band) }}</dd>
+          </div>
+          <div>
+            <dt>{{ t('beacon.peakInterval') }}</dt>
+            <dd>{{ formatTime(payload.peakHour) }} IST</dd>
+          </div>
+          <div>
+            <dt>{{ t('beacon.trajectory') }}</dt>
+            <dd>{{ trajectoryLabel(payload.trajectory) }}</dd>
+          </div>
+          <div>
+            <dt>{{ t('beacon.pattern') }}</dt>
+            <dd>{{ beaconPatternLabel(payload.pattern) }}</dd>
+          </div>
+        </dl>
+        @if (payload.diagnostic) {
+          <p class="beacon-diagnostic-note">{{ t('beacon.diagnosticNote') }}</p>
+        }
+      </article>
+    }
+  </section>
+
+  <section class="provenance-section panel" aria-labelledby="provenance-heading">
+    <div class="section-heading">
+      <div>
+        <p class="eyebrow">{{ t('source.eyebrow') }}</p>
+        <h2 id="provenance-heading">{{ t('source.heading') }}</h2>
+      </div>
+    </div>
+    <p class="provenance-copy">
+      {{ t('source.description') }}
+    </p>
+    @if (sources(); as sourceInfo) {
+      <div class="source-grid">
+        @for (source of sourceEntries(); track source.name) {
+          <article class="source-card">
+            <strong>{{ source.label }}</strong>
+            <span>
+              {{ source.record.path }} ·
+              {{ t('source.rowCount', { count: formatNumber(source.record.rows) }) }}
+            </span>
+            <code>SHA-256 {{ source.record.sha256 }}</code>
+          </article>
+        }
+      </div>
+      <p class="provenance-copy">
+        {{ t('source.forecastScaling') }}
+        {{ sourceInfo.manifest.selectedForecastScalingAlreadyApplied }}×.
+        {{ t('source.noExtraScaling') }}
+      </p>
+      <details class="catalogue-details">
+        <summary>{{ t('source.catalogue') }}</summary>
+        <dl>
+          <div>
+            <dt>{{ t('source.doi') }}</dt>
+            <dd>{{ sourceInfo.manifest.climateVerseCatalogue.doi }}</dd>
+          </div>
+          <div>
+            <dt>{{ t('source.version') }}</dt>
+            <dd>{{ sourceInfo.manifest.climateVerseCatalogue.version }}</dd>
+          </div>
+          <div>
+            <dt>{{ t('source.stage') }}</dt>
+            <dd>{{ sourceInfo.manifest.climateVerseCatalogue.stage }}</dd>
+          </div>
+          <div>
+            <dt>{{ t('source.catalogueRole') }}</dt>
+            <dd>{{ sourceInfo.manifest.climateVerseCatalogue.catalogueRole }}</dd>
+          </div>
+          <div>
+            <dt>{{ t('source.provider') }}</dt>
+            <dd>{{ sourceInfo.manifest.climateVerseCatalogue.dataProvider }}</dd>
+          </div>
+        </dl>
+      </details>
+    }
+
+    <h3 class="capability-heading">{{ t('source.capabilities') }}</h3>
+    <div class="capability-grid">
+      <div>
+        <span>{{ t('source.observations') }}</span><strong>{{ capabilityStatus('observations') }}</strong>
+      </div>
+      <div>
+        <span>{{ t('source.forecasts') }}</span><strong>{{ capabilityStatus('forecasts') }}</strong>
+      </div>
+      <div>
+        <span>{{ t('source.weather') }}</span><strong>{{ capabilityStatus('weather') }}</strong>
+      </div>
+      <div>
+        <span>{{ t('source.ai') }}</span><strong>{{ capabilityStatus('ai') }}</strong>
+      </div>
+      <div>
+        <span>{{ t('source.beacon') }}</span><strong>{{ capabilityStatus('beacon') }}</strong>
+      </div>
+    </div>
+    <p class="provenance-copy">
+      {{ t('source.capabilityNote') }}
+    </p>
+    @if (aiStatus(); as status) {
+      <p class="provenance-copy">
+        {{ t('source.localModel', { model: status.model, reason: status.reason ?? '' }) }}
+      </p>
+    }
+    <button class="button button-outline" type="button" (click)="clearOfflineData()">
+      {{ t('source.clearOffline') }}
+    </button>
+  </section>
+</main>
+
+<footer class="site-footer">
+  <span>Air Guardian · Mumbai</span>
+  <span>{{ t('footer.info') }}</span>
+</footer>

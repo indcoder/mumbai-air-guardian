@@ -1,0 +1,30 @@
+version: 1
+timezone: Asia/Kolkata
+observations:
+  path: 'zindi_artifacts\Train.csv'
+  sha256: 8adbcf55315f166d7dc3dc1d3e4d7400651f26c1d8b95ff387eef38f4e70a283
+  expected_rows: 48400
+forecasts:
+  path: 'zindi_artifacts\submission_xgb_corrected_scale_110.csv'
+  sha256: f82875f5f6ce820fafea9e53ef93298f3a21c29d514bbad9caec260f17c907d4
+  expected_rows: 2592
+  selected_scaling_already_applied: 1.10
+  generation_time: unavailable
+forecast_intervals:
+  path: 'zindi_artifacts\Test.csv'
+  sha256: e7b9cc8859beb939276c958393e148adae55229c34f99dcb2555fe4ac13b28db
+  expected_rows: 2592
+stations:
+  path: 'zindi_artifacts\Stations.csv'
+  sha256: 383269fa04abf8f2eb49e5ec0bb5a77c2df11acb6aca996b7edf269a109ee9cf
+  expected_rows: 4
+optional_environmental_context:
+  enabled: false
+  status: needs_validation
+climateverse_catalogue:
+  doi: 10.71646/XXOBKO
+  version: '1.0'
+  stage: planning-review
+  discovered_via: ClimateVerse India Portal
+  catalogue_role: metadata-discovery-provenance
+  data_provider: Open-Meteo

@@ -1,0 +1,4 @@
+version: 1
+trajectory:
+  lookahead_hours: 6
+  slope_threshold_ug_m3_per_hour: 2
