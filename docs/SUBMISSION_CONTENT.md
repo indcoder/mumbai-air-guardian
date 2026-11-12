@@ -5,6 +5,8 @@
 **Mumbai Air Guardian: Air Pulse**  
 *A local, evidence-based activity planner for a fixed Mumbai air-quality forecast.*
 
+**Source code:** https://github.com/indcoder/mumbai-air-guardian (competition data files are not redistributed; see the README).
+
 ## Project summary
 
 Air Pulse is a local prototype for exploring the supplied air-quality observations and forecast snapshot for four Mumbai monitoring stations. The Angular interface presents interval-aware data and asks the Go service to compare complete forecast windows for a planned activity. It is not a live monitoring service or a source of medical advice.
