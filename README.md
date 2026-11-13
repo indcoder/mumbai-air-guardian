@@ -130,7 +130,11 @@ Google Gemma 4 is the grounded explanation layer. The application sends a bounde
 
 ### ClimateVerse: discovering the context
 
-Project provenance notes record a ClimateVerse India catalogue entry for Open-Meteo (DOI `10.71646/XXOBKO`, version `1.0`); the configuration lists Open-Meteo as the data provider. This is catalogue/discovery metadata, not a runtime ClimateVerse API or evidence that ClimateVerse generated the weather data or the selected PM2.5 forecast. The selected forecast's historical acquisition path through ClimateVerse is unverified. Weather context that cannot be validated remains unavailable.
+Project provenance records a ClimateVerse India catalogue entry for Open-Meteo (DOI 10.71646/XXOBKO, version 1.0), while the configuration correctly identifies Open-Meteo as the underlying data provider.
+
+ClimateVerse provides the project's dataset-discovery and provenance context. It is not presented as the source of the PM2.5 forecast or as a runtime weather API.
+
+Weather context that cannot be validated remains unavailable.
 
 #### Go role
 
@@ -191,15 +195,15 @@ Observation and forecast timestamp semantics are documented in [`docs/TIMESTAMP_
 
 ### Two-minute judging pitch
 
-“Mumbai Air Guardian asks a question beyond the forecasting challenge: once we can predict air quality, what can someone actually do with that prediction?
+“Mumbai Air Guardian turns supplied air-quality forecasts into a decision people can compare and understand.
 
-Take Malad West on 12 November. A preferred two-hour window from 08:00 to 10:00 has a mean predicted PM2.5 of 86.15 µg/m³. The deterministic Go planner identifies 15:00 to 17:00 at 52.58 µg/m³, 33.57 µg/m³ lower among the available complete forecast windows.
+- **The data:** Air Pulse presents supplied observations and forecasts for four stations. Forecast values are joined to the challenge interval reference, and missing intervals remain gaps.
+- **The math:** Go deterministically selects a complete activity window with a relatively lower mean forecast. In the Malad West example, 15:00–17:00 averages 52.58 µg/m³ versus 86.15 µg/m³ for 08:00–10:00—33.57 µg/m³ lower among available complete windows. This is a comparison, not a health or safety claim.
+- **The AI:** When requested, local Google Gemma 4 explains bounded Go-computed evidence; it does not calculate the forecast or choose the period. Invalid or timed-out output uses a deterministic fallback.
+- **The experience:** The Angular PWA supports English, Marathi and Hindi, and can replay an exact saved plan offline. Air Beacon is a simulation, not physical-device control.
+- **Provenance:** ClimateVerse provides dataset-discovery context; the project record identifies Open-Meteo as the underlying provider, not as the source of the supplied PM2.5 forecast.
 
-Go calculates. AI does not choose the time. Local Google Gemma 4 can explain the evidence when requested, with validation and a deterministic fallback rather than changing the forecast. The interface is available in English, Marathi and Hindi.
-
-Project metadata records ClimateVerse as a dataset-discovery and provenance reference, separately from Open-Meteo, the listed data provider. The Angular PWA can replay an exact saved plan offline, and the simulated Air Beacon explores an accessible ambient signal.
-
-Mumbai Air Guardian moves from forecast, to evidence, to explanation, to decision, and ultimately to action.”
+Forecast → Evidence → Explanation → Decision → Ambient Signal.”
 
 ## Current capability status
 

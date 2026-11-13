@@ -17,16 +17,15 @@ Air Guardian turns the supplied challenge snapshot into Air Pulse: a way to insp
 
 ## The problem
 
-Forecast numbers alone do not answer:
+Forecast numbers alone do not show which complete activity window has relatively lower predicted PM2.5, what evidence supports the recommendation, or whether someone can understand it in a language they use.
 
-- What is expected in the supplied forecast?
-- Which complete activity window has a relatively lower predicted PM2.5 value?
-- Why did the planner select that period?
-- Can someone understand the result in a language they use?
+<div class="question-grid" aria-label="Three questions Air Guardian helps answer">
+<article><p class="question-label">WHEN?</p><p>Which complete activity period has relatively lower predicted PM2.5?</p></article>
+<article><p class="question-label">WHY?</p><p>What evidence supports the recommendation?</p></article>
+<article><p class="question-label">UNDERSTANDABLE?</p><p>Can the result be explained in English, Marathi or Hindi?</p></article>
+</div>
 
-Air Guardian presents the supplied observations and forecast for four challenge stations. It distinguishes observed intervals from forecast intervals, preserves gaps instead of filling them, and keeps source and timing limitations visible.
-
-The application does not claim that a lower forecast value makes a period safe or healthy. It is a transparent comparison of supplied forecast values.
+Air Guardian compares supplied forecast values; a lower value is not a claim that a period is safe or healthy.
 
 <div class="page-break"></div>
 
@@ -64,35 +63,49 @@ This example is source-backed by the regression test in the [repository](https:/
 
 ## Air Pulse
 
-Air Pulse shows the latest supplied observation, forecast peak and minimum, and near-term trajectory. Each period is presented with its time interval and a text risk band.
+Air Pulse distinguishes the latest supplied observation from the forecast peak, minimum and near-term trajectory.
 
-![Air Outlook cards showing latest observation, forecast peak, forecast minimum and near-term trajectory](docs/submission-assets/air-outlook-cards.png)
+<div class="outlook-crops" aria-label="Air Pulse evidence, enlarged from the application screenshot">
+<figure>
+<figcaption>Latest observation and forecast peak</figcaption>
+<div class="outlook-crop"><img src="docs/submission-assets/air-outlook-cards.png" alt="Air Pulse cards enlarged: latest observation 189.93 micrograms per cubic metre, and forecast peak 255.8 micrograms per cubic metre"></div>
+</figure>
+<figure>
+<figcaption>Forecast minimum and near-term trajectory</figcaption>
+<div class="outlook-crop outlook-crop--right"><img src="docs/submission-assets/air-outlook-cards.png" alt="Air Pulse cards enlarged: forecast minimum 40.51 micrograms per cubic metre, and an improving near-term trajectory"></div>
+</figure>
+</div>
 
-Forecast values are joined to the challenge interval reference; missing intervals remain gaps. Observation and forecast time ranges stay distinct. The forecast issuance time is not present in the supplied data.
+Forecast values are joined to the challenge interval reference; missing intervals remain gaps. Observation and forecast time ranges stay distinct, and the forecast issuance time is unavailable.
 
 <div class="page-break"></div>
 
 ## Prediction is mathematical. Explanation is generative.
 
-Google Gemma 4 (`gemma4:e4b`) is the optional local explanation layer, run through Ollama. A user explicitly requests an explanation of a plan already calculated by Go.
+Google Gemma 4 (`gemma4:e4b`) is the local generative explanation layer, run through Ollama. A user explicitly requests an explanation of a plan already calculated by Go.
 
-- PM2.5 values come from the supplied forecast artifact.
-- Go selects the relatively lower-forecast complete activity window.
-- Gemma receives bounded evidence and explains the result; it never predicts PM2.5 or chooses a period.
-- Invalid or timed-out model output is replaced with a labeled deterministic template.
-- An English local Gemma response was generated and reviewed; future output is not guaranteed to pass validation.
+When local generation is unavailable, times out, or fails validation, Air Guardian uses a clearly labelled deterministic explanation fallback.
 
-![Activity plan with a reviewed local Gemma explanation, share preview and deterministic Go result](docs/submission-assets/activity-plan-gemma.png)
+<div class="concept-pair" aria-label="Prediction is mathematical; explanation is generative">
+<article><p class="concept-label">PREDICTION</p><p>Mathematical</p><p>Go calculates the activity period from supplied PM2.5 forecast values.</p></article>
+<article><p class="concept-label">EXPLANATION</p><p>Generative</p><p>Gemma explains bounded evidence; it does not calculate PM2.5 or choose the period.</p></article>
+</div>
 
-*Example UI state; this screenshot uses a different preferred period from the Malad West comparison on page 3.*
+PM2.5 comes from the supplied forecast; Go selects the period. Gemma receives bounded Go-computed evidence and explains only. English generation is currently verified locally; Marathi and Hindi use deterministic localized templates. A reviewed English response passed application checks; future output is not guaranteed to pass validation.
 
-Gemma generation is currently English-only. Marathi and Hindi explanations use deterministic localized templates.
+<div class="gemma-examples" aria-label="Enlarged application evidence for the Go plan and local Gemma explanation">
+<figure><figcaption>Go-selected plan and comparison</figcaption><div class="gemma-crop gemma-crop--plan"><img src="docs/submission-assets/activity-plan-gemma.png" alt="Enlarged activity recommendation and preferred-time comparison from the local application screenshot"></div></figure>
+<figure><figcaption>Local Gemma explanation for the selected plan</figcaption><div class="gemma-crop gemma-crop--explanation"><img src="docs/submission-assets/activity-plan-gemma.png" alt="Enlarged grounded explanation card from the local application screenshot"></div></figure>
+</div>
+<p class="screenshot-note">Screenshot shows a separate validated planning example.</p>
 
 <div class="page-break"></div>
 
 ## Mumbai speaks three languages
 
-The interface and deterministic explanation templates support English, Marathi and Hindi. Language access applies to the planning controls and results, not just the landing page.
+The interface and deterministic explanation templates support English, Marathi and Hindi.
+
+<p class="language-emphasis">Language access applies to planning controls, results and deterministic explanations—not just the landing page.</p>
 
 <div class="visual-pair">
 <div>
@@ -105,16 +118,19 @@ The interface and deterministic explanation templates support English, Marathi a
 </div>
 </div>
 
-The author reviewed the shown planning and explanation flows in both languages and approved overall language acceptance. Gemma generation in Marathi and Hindi is not implemented.
+The project owner reviewed the shown Marathi and Hindi planning and explanation flows. This is not professional linguistic certification; Gemma generation in these languages is not implemented.
 
 <div class="page-break"></div>
 
 ## Beyond the screen
 
-The Air Beacon simulation translates a forecast state into a static color marker and text-described pulse pattern. It explores an accessible ambient signal, without implying a sensor or medical measurement.
+The Air Beacon simulation translates a forecast state into a static color marker and text-described pulse pattern. It explores an accessible ambient signal without implying a sensor or medical measurement.
 
-**Air Beacon:** a visual simulation, not physical-device control.
-**UNO Q: host-recognized prototype target only**
+<div class="beacon-status" aria-label="Air Beacon and Arduino UNO Q implementation boundaries">
+<article><p class="status-label">AIR BEACON SIMULATION</p><p class="status-value">IMPLEMENTED</p></article>
+<article><p class="status-label">PHYSICAL ARDUINO CONTROL</p><p class="status-value">NOT IMPLEMENTED</p></article>
+<article><p class="status-label">ARDUINO UNO Q</p><p class="status-value">HARDWARE DIRECTION / PROTOTYPE TARGET</p></article>
+</div>
 
 <div class="visual-pair">
 <div>
@@ -127,7 +143,7 @@ The Air Beacon simulation translates a forecast state into a static color marker
 </div>
 </div>
 
-No firmware was uploaded, no serial communication occurred, and Air Guardian does not control the board.
+No firmware was uploaded, no serial communication occurred, and the preview does not indicate physical LED control or PM2.5 sensing.
 
 <div class="page-break"></div>
 
@@ -135,32 +151,72 @@ No firmware was uploaded, no serial communication occurred, and Air Guardian doe
 
 ### Forecast → Evidence → Explanation → Decision → Ambient Signal
 
-1. **Forecast artifact:** the selected challenge PM2.5 forecast provides quantitative values; its generation time is unavailable.
-2. **Evidence:** Go validates the pinned inputs and joins forecasts to the supplied interval reference and stations.
-3. **Decision:** one Go planner compares complete contiguous hourly windows. The browser does not implement a second planner.
-4. **Explanation:** local Gemma can explain the Go-computed result on request; localized deterministic templates remain available as fallback.
-5. **Experience:** Angular 22 presents the data and supports plan sharing plus exact saved-plan replay when offline.
-6. **Ambient concept:** the Air Beacon preview derives a virtual pattern from validated forecast data.
+<svg class="architecture-diagram" role="img" aria-labelledby="architecture-title architecture-description" viewBox="0 0 1000 700" xmlns="http://www.w3.org/2000/svg">
+<title id="architecture-title">Mumbai Air Guardian conceptual architecture</title>
+<desc id="architecture-description">ClimateVerse catalogue context records an Open-Meteo provider entry but is separate from the selected competition forecast. The forecast flows to the Go evidence and activity planner. Go can send bounded evidence to local Gemma for explanation only. Go and Gemma explanations are presented by the Angular PWA, which supports sharing, exact offline replay and a simulated Air Beacon.</desc>
+<defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#315d56"/></marker></defs>
+<g fill="none" stroke="#315d56" stroke-width="3" marker-end="url(#arrow)">
+<path d="M380 86 H490"/>
+<path d="M300 250 H365"/>
+<path d="M650 250 H715"/>
+<path d="M500 320 V390"/>
+<path d="M830 320 C830 360 700 370 635 405"/>
+<path d="M500 485 C470 520 340 520 315 560"/>
+<path d="M500 485 C530 520 660 520 685 560"/>
+</g>
+<g font-family="Segoe UI, sans-serif" fill="#17262b">
+<rect x="20" y="30" width="360" height="112" rx="14" fill="#edf5ef" stroke="#7ea99a" stroke-width="2"/>
+<text x="200" y="68" text-anchor="middle" font-size="26" font-weight="700">ClimateVerse</text>
+<text x="200" y="99" text-anchor="middle" font-size="20">Dataset discovery / provenance context</text>
+<text x="200" y="126" text-anchor="middle" font-size="17">Not the PM2.5 forecast source</text>
+<rect x="490" y="30" width="490" height="112" rx="14" fill="#f3f1ea" stroke="#bcae84" stroke-width="2"/>
+<text x="735" y="68" text-anchor="middle" font-size="24" font-weight="700">Project provenance record</text>
+<text x="735" y="99" text-anchor="middle" font-size="18">Open-Meteo catalogue entry; underlying provider</text>
+<text x="735" y="126" text-anchor="middle" font-size="17">No runtime ClimateVerse API</text>
+<rect x="20" y="195" width="280" height="125" rx="14" fill="#f3f1ea" stroke="#bcae84" stroke-width="2"/>
+<text x="160" y="235" text-anchor="middle" font-size="22" font-weight="700">Selected challenge</text>
+<text x="160" y="264" text-anchor="middle" font-size="22" font-weight="700">PM2.5 forecast</text>
+<text x="160" y="294" text-anchor="middle" font-size="17">Fixed artifact; issue time unavailable</text>
+<rect x="365" y="195" width="285" height="125" rx="14" fill="#e5f1eb" stroke="#4d8875" stroke-width="2"/>
+<text x="507" y="235" text-anchor="middle" font-size="24" font-weight="700">Go evidence + planner</text>
+<text x="507" y="268" text-anchor="middle" font-size="18">Validates intervals and gaps</text>
+<text x="507" y="296" text-anchor="middle" font-size="18">Calculates and selects the period</text>
+<rect x="715" y="195" width="265" height="125" rx="14" fill="#edf5ef" stroke="#7ea99a" stroke-width="2"/>
+<text x="847" y="235" text-anchor="middle" font-size="24" font-weight="700">Local Gemma 4</text>
+<text x="847" y="268" text-anchor="middle" font-size="18">Grounded explanation</text>
+<text x="847" y="296" text-anchor="middle" font-size="18">Does not calculate or choose</text>
+<text x="680" y="185" text-anchor="middle" font-size="15">Bounded evidence</text>
+<rect x="360" y="390" width="280" height="95" rx="14" fill="#dcebe5" stroke="#315d56" stroke-width="3"/>
+<text x="500" y="430" text-anchor="middle" font-size="26" font-weight="700">Angular 22 PWA</text>
+<text x="500" y="460" text-anchor="middle" font-size="18">Localized decision experience</text>
+<rect x="150" y="555" width="330" height="100" rx="14" fill="#f3f1ea" stroke="#bcae84" stroke-width="2"/>
+<text x="315" y="596" text-anchor="middle" font-size="23" font-weight="700">Sharing + offline</text>
+<text x="315" y="626" text-anchor="middle" font-size="18">Exact saved-plan replay</text>
+<rect x="520" y="555" width="330" height="100" rx="14" fill="#f3f1ea" stroke="#bcae84" stroke-width="2"/>
+<text x="685" y="596" text-anchor="middle" font-size="23" font-weight="700">Air Beacon</text>
+<text x="685" y="626" text-anchor="middle" font-size="18">Simulation only</text>
+</g>
+</svg>
 
-The project records ClimateVerse catalogue metadata for dataset discovery and provenance; Open-Meteo is listed as the data provider. This metadata is separate from the forecast artifact and does not indicate a runtime ClimateVerse connection.
+Go owns forecast evidence and activity calculations. Gemma is an explanation-only branch; the Angular PWA also provides deterministic English, Marathi and Hindi templates when local generation is unavailable or invalid.
 
 <div class="page-break"></div>
 
 ## Why this is creative
 
-**Impact:** make a supplied PM2.5 forecast easier to understand and compare across activity windows, in three interface languages.
+<div class="judging-grid" aria-label="Four judging criteria">
+<article><h3>IMPACT</h3><p>Multilingual understanding and activity planning around supplied PM2.5 forecasts.</p></article>
+<article><h3>NOVELTY</h3><p class="stage-chain">Forecast → Evidence → Explanation → Decision → Ambient Signal</p></article>
+<article><h3>FUNCTIONALITY</h3><ul><li>Working Go planner and four-station Air Pulse</li><li>PWA snapshot and exact saved-plan replay</li><li>Sharing and verified local English Gemma generation</li><li>Deterministic fallback and simulated Air Beacon</li></ul></article>
+<article><h3>GOOGLE TECHNOLOGY</h3><ul><li>Google Gemma 4</li><li>Angular 22</li><li>Modern Web Guidance 1.0</li></ul><p>See <a href="docs/MODERN_WEB_REVIEW.md">review scope and limitations</a> and the <a href="https://developer.chrome.com/blog/modern-web-guidance-v1">Chrome Developers announcement</a>.</p></article>
+</div>
 
-**Novelty:** connect the five stages—**Forecast → Evidence → Explanation → Decision → Ambient Signal**—instead of stopping at a chart.
-
-**Functionality:** a deterministic planner, four-station Air Pulse, PWA snapshot and saved-plan replay, sharing, guarded local Gemma explanation, and simulated Air Beacon.
-
-**Google technology in the working project:**
-
-- **Gemma 4:** grounded, user-triggered local explanation.
-- **Angular 22:** interactive multilingual PWA.
-- **Modern Web Guidance 1.0:** informed the Angular frontend review workflow; see the [scope and limitations](docs/MODERN_WEB_REVIEW.md). Its stable release was [announced by Google's Chrome team on 10 November 2026](https://developer.chrome.com/blog/modern-web-guidance-v1).
-
-**ClimateVerse:** project metadata records a discovery/provenance reference, with Open-Meteo listed as the data provider. It is not described as the source of the selected forecast or a runtime API.
+<aside class="climateverse-strip">
+<h3>CLIMATEVERSE</h3>
+<p>Project provenance records a ClimateVerse India catalogue entry for Open-Meteo (DOI 10.71646/XXOBKO, version 1.0), while the configuration correctly identifies Open-Meteo as the underlying data provider.</p>
+<p>ClimateVerse provides the project's dataset-discovery and provenance context. It is not presented as the source of the PM2.5 forecast or as a runtime weather API.</p>
+<p>Weather context that cannot be validated remains unavailable.</p>
+</aside>
 
 <div class="page-break"></div>
 
