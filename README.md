@@ -110,7 +110,7 @@ Go 1.27.4 is the local data-validation and API runtime. It computes activity rec
 
 Angular 22 provides the localized Air Pulse interface, forms, chart/table views, and explicit explanation and beacon actions. The production service worker caches application assets; browser storage supports offline snapshot restoration and exact saved-result replay. The native share flow (operating-system share sheet) and plan-summary copy were validated manually.
 
-A focused interface review used Modern Web Guidance CLI 1.0.0; its scope, checks and limitations are documented in [`docs/MODERN_WEB_REVIEW.md`](docs/MODERN_WEB_REVIEW.md). This is not a claim of a full accessibility audit.
+A focused interface review used Modern Web Guidance CLI 1.0.0, whose stable release was [announced by Google's Chrome team on 10 November 2026](https://developer.chrome.com/blog/modern-web-guidance-v1). The tool provides web-platform guidance for coding agents; our review scope, checks and limitations are documented in [`docs/MODERN_WEB_REVIEW.md`](docs/MODERN_WEB_REVIEW.md). This is not a claim of a full accessibility audit.
 
 #### Forecasting-pipeline role
 
