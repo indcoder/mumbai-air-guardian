@@ -110,6 +110,8 @@ Go 1.27.4 is the local data-validation and API runtime. It computes activity rec
 
 Angular 22 provides the localized Air Pulse interface, forms, chart/table views, and explicit explanation and beacon actions. The production service worker caches application assets; browser storage supports offline snapshot restoration and exact saved-result replay. The native share flow (operating-system share sheet) and plan-summary copy were validated manually.
 
+A focused interface review used Modern Web Guidance CLI 1.0.0; its scope, checks and limitations are documented in [`docs/MODERN_WEB_REVIEW.md`](docs/MODERN_WEB_REVIEW.md). This is not a claim of a full accessibility audit.
+
 #### Forecasting-pipeline role
 
 The application consumes the author's `submission_xgb_corrected_scale_110.csv` forecast output from the competition. It does not retrain the model or run the competition's Python pipeline. The selected output already has 1.10 scaling applied; Air Pulse does not scale it again. Its forecast generation time is unavailable.
@@ -165,11 +167,14 @@ Observation and forecast timestamp semantics are documented in [`docs/TIMESTAMP_
 
 Mumbai Air Guardian is a local prototype for exploring supplied air-quality data without confusing a fixed forecast with live conditions. Its Air Pulse interface presents observations and forecast intervals for four Mumbai stations, preserves missing intervals as gaps, and makes source and timing limitations visible. This matters because a timestamp embedded in a forecast identifier is not enough to determine what hour the value describes.
 
-The application joins forecast values to the supplied interval reference and validates the selected 1.10-scaled artifact without scaling it again. When someone plans an activity, the Go service compares complete contiguous forecast windows for the selected station and returns a recommendation with its mean forecast PM2.5. A preferred start time is optional; without one, the app does not calculate or display a comparison metric.
+The demonstration follows four steps:
 
-The Angular PWA can restore a validated local snapshot and replay an exact saved plan if the Go service is unavailable. It never creates a new offline recommendation. The interface and deterministic explanation templates support English, Marathi, and Hindi, and the main planning, comparison, explanation and beacon flows were reviewed in all three languages.
+- **The data:** Forecast values are joined to the supplied interval reference, preserving missing intervals as gaps. The selected artifact is already scaled by 1.10 and is not scaled again.
+- **The math:** Go deterministically finds the lowest-forecast-PM2.5 complete, contiguous activity window. A preferred-time comparison is optional and appears only when requested.
+- **The explanation:** Local Gemma (`gemma4:e4b`) can explain the Go-computed result on request; it never calculates or selects the plan. Its response is checked against the computed evidence, with a labeled deterministic fallback if generation fails validation or times out.
+- **The interface:** The Angular PWA and deterministic explanation templates support English, Marathi, and Hindi. If Go is unavailable, the app can restore a validated local snapshot and replay an exact saved plan; it cannot create a new offline recommendation. Gemma explanations require Ollama to be running.
 
-Optional capabilities are labeled honestly. Explanations require an explicit request; a local English Gemma response has been demonstrated, with a deterministic fallback when generation fails validation or times out. Air Beacon is a forecast-derived visual simulation; no physical device is integrated with or controlled by the app. The contribution demonstrated here is careful interval interpretation, transparent provenance, and a reproducible local comparison—not a medical recommendation, a live-monitoring claim, or measured health impact.
+Air Beacon is a forecast-derived visual simulation; no physical device is integrated with or controlled by the app. The contribution demonstrated here is careful interval interpretation, transparent provenance, and a reproducible local comparison—not a medical recommendation, a live-monitoring claim, or measured health impact.
 
 ## Current capability status
 
