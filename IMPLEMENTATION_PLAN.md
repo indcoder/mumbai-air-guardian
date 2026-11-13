@@ -1,10 +1,16 @@
 # Mumbai Air Guardian: evidence-based implementation plan
 
+## Current public-demo deployment note (internal)
+
+The judge-facing README and submission PDF include the intended URL `https://air.hackmum.in` and the public-demo availability caveat. This documentation is not evidence that the endpoint is deployed or verified.
+
+Cloud deployment remains a separate post-submission workstream. Do not upload the excluded competition inputs while their redistribution rights are unconfirmed. The present service serves the API only and is loopback-bound; confirm a compliant data-serving approach, externally configurable API origin, and frontend/static hosting behavior before deployment. `gcloud` was not available in the verified environment; no cloud deployment command was run. Track operational preparation and verification in `docs/PUBLIC_DEMO_OPERATIONS.md`.
+
 ## 1. Executive summary
 
 Build the complete prototype beside the existing competition work, not by modifying it. Preserve all 85 files in `D:\Projects\air-guardian\zindi_artifacts`. Use the existing Python work only as offline forecasting lineage; the application runtime is Go, Angular 22, optional local Ollama/Gemma, and optional Arduino.
 
-This root file is the **approved implementation contract and live execution record**, incorporating the user's **APPROVED PLAN WITH EXECUTION REFINEMENTS** and subsequent editorial corrections. Those refinements take precedence over conflicting earlier phase dependencies or capability claims. The user has approved execution; Phases 1–3 gates have passed, including a reviewed local English Gemma response; Phase 4 localization's automated/representative smoke gate and Phase 6 simulation/API/UI/protocol gate have passed. Phase 5 PWA/sharing acceptance is complete. The user has approved accessibility and language acceptance; audit limitations are recorded in Phase 7. Final document preparation and external submission prerequisites remain outstanding; Arduino firmware and physical transport remain unverified.
+This root file is the **approved implementation contract and live execution record**, incorporating the user's **APPROVED PLAN WITH EXECUTION REFINEMENTS** and subsequent editorial corrections. Those refinements take precedence over conflicting earlier phase dependencies or capability claims. The user has approved execution; Phases 1–3 gates have passed, including a reviewed local English Gemma response; Phase 4 localization's automated/representative smoke gate and Phase 6 simulation/API/UI/protocol gate have passed. Phase 5 PWA/sharing acceptance is complete. The user has approved accessibility and language acceptance; audit limitations are recorded in Phase 7. The judge-facing README and 10-page PDF are finalized and validated locally; the PDF is 795,140 bytes, below the 10 MB limit. Challenge-form upload is a separate submission action. Arduino firmware and physical transport remain unverified.
 
 Keep this root file current with toolchain status, milestone results, verified capabilities, deviations, blockers and exact test commands/results. Use the capability labels **IMPLEMENTED**, **SIMULATED**, **OPTIONAL**, **PLANNED** and **UNAVAILABLE**. A feature described here is **PLANNED**, not IMPLEMENTED, until demonstrated. Record optional-service failures separately from application liveness.
 

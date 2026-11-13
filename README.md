@@ -1,12 +1,19 @@
-# Mumbai Air Guardian: Air Pulse
+# Mumbai Air Guardian
 
-*A local, evidence-based activity planner for a fixed Mumbai air-quality forecast.*
+*A multilingual air-quality decision companion for Mumbai.*
 
-- **Source code:** https://github.com/indcoder/mumbai-air-guardian
-- **Submission document (PDF):** [`docs/Mumbai_Air_Guardian_Submission.pdf`](docs/Mumbai_Air_Guardian_Submission.pdf) — same content as the repository README.
-- **Stack:** Go 1.27 API · Angular 22 PWA · local Google Gemma (`gemma4:e4b` via Ollama) · English, Marathi and Hindi · simulated Arduino UNO Q Air Beacon.
+From air-quality forecasts to decisions people can understand and act on.
 
-This is not live monitoring or medical advice. The latest supplied observation ends at **10 November 2026, 09:00 IST**. Forecast issuance time is unavailable. The selected forecast file has already been scaled by 1.10; the application does not scale it again.
+- **Judge-focused submission (PDF):** [`docs/Mumbai_Air_Guardian_Submission.pdf`](docs/Mumbai_Air_Guardian_Submission.pdf) — concise visual narrative, separate from the technical README.
+- **Public hackathon demo:** [https://air.hackmum.in](https://air.hackmum.in)
+- **Source code and reproducibility:** [https://github.com/indcoder/mumbai-air-guardian](https://github.com/indcoder/mumbai-air-guardian)
+- **Product:** Air Pulse, the forecast experience within Mumbai Air Guardian.
+
+The public demo is provided for challenge evaluation and may be temporarily unavailable while deployment or maintenance is in progress, or restricted/taken offline in response to unexpected traffic or abuse. The GitHub repository remains the durable source and reproducibility artifact.
+
+Mumbai Air Guardian turns the supplied Mumbai PM2.5 forecast snapshot into a decision experience: people can inspect observations and forecasts, compare complete activity windows, request a grounded explanation, use the interface in English, Marathi or Hindi, and share a plan. Its Air Beacon explores how a forecast state could be presented as an ambient signal.
+
+This is a fixed challenge-data snapshot, not live monitoring or medical advice. The forecast issuance time is unavailable; the selected forecast artifact has already been scaled by 1.10 and is not scaled again.
 
 **For judges:** the [Submission](#submission) section covers impact, novelty, functionality and the Google tools used, with screenshots. [Run locally](#run-locally-on-windows) explains how to reproduce the demo.
 
@@ -14,9 +21,11 @@ This is not live monitoring or medical advice. The latest supplied observation e
 
 - [Submission](#submission)
   - [Summary and problem](#project-summary)
-  - [Impact](#impact) · [Novelty](#novelty) · [Demonstrated functionality](#demonstrated-functionality)
+  - [Malad West example](#what-air-guardian-actually-does)
+  - [Impact](#impact) · [What makes it different](#what-makes-it-different) · [Demonstrated functionality](#demonstrated-functionality)
   - [Screenshots](#screenshots)
-  - [Architecture and component roles](#architecture)
+  - [Google Gemma role](#google-gemma-4) · [ClimateVerse context](#climateverse-discovering-the-context)
+  - [Multilingual experience](#multilingual-experience) · [Architecture](#architecture)
   - [Responsible-AI safeguards](#responsible-ai-safeguards) · [Provenance](#provenance) · [Limitations](#limitations)
   - [Two-minute judging pitch](#two-minute-judging-pitch)
 - [Current capability status](#current-capability-status)
@@ -27,34 +36,51 @@ This is not live monitoring or medical advice. The latest supplied observation e
 
 ### Project summary
 
-Air Pulse is a local prototype for exploring the supplied air-quality observations and forecast snapshot for four Mumbai monitoring stations. The Angular interface presents interval-aware data and asks the Go service to compare complete forecast windows for a planned activity. It is not a live monitoring service or a source of medical advice.
+Mumbai Air Guardian transforms the challenge's supplied PM2.5 forecast into a multilingual decision experience. Air Pulse presents observations and forecast intervals for four Mumbai stations; the Go planner compares complete forecast windows for a planned activity. The result is a relative comparison of forecast values, not a health guarantee.
 
-### Problem
+#### Problem
 
-Air-quality datasets can be misread when observation intervals, forecast intervals, missing periods, scaling, and forecast issuance time are unclear. Air Pulse makes those boundaries visible and provides a consistent way to compare forecast periods without describing archived inputs as current conditions.
+Forecast numbers alone do not show which complete activity window is relatively lower, why it was selected, or how the result can be understood in a local language. Air Pulse keeps observation and forecast intervals distinct, preserves gaps, and makes data-source and timing limits visible.
+
+### What Air Guardian actually does
+
+**Verified example — Malad West, 12 November 2026**
+
+- Activity duration: **2 hours**
+- Preferred period, **08:00–10:00 IST**: mean predicted PM2.5 **86.15 µg/m³**
+- Lower-forecast option, **15:00–17:00 IST**: mean predicted PM2.5 **52.58 µg/m³**
+- Difference: **33.57 µg/m³ lower** than the preferred period
+
+The Go planner calculates this recommendation deterministically from the supplied hourly forecast. Gemma may explain that result but cannot change forecast values or select the recommended period. The source-backed regression test records the full-precision values in [`planner_test.go`](backend/internal/activity/planner_test.go). A lower forecast value is not a claim that a period is safe or healthy.
 
 ### Impact
 
-**Potential impact; not measured:** the prototype is designed to help people in Mumbai inspect forecasts in their own language and choose a lower-exposure time for an outdoor activity such as a walk, a commute or children's play. No health outcome, behavior change, deployment reach, or real-world impact study has been measured. Recommendations are relative comparisons of forecast values, not health guarantees.
+Mumbai Air Guardian makes supplied air-quality forecasts easier to understand and act on. Rather than requiring someone to interpret a PM2.5 time series manually, it identifies relatively lower-forecast periods for activities such as walking, commuting, children's outdoor time and community events. The English, Marathi and Hindi interface broadens who can use the experience. Recommendations are transparent comparisons, not health guarantees; the application makes snapshot age, station coverage and forecast limitations visible. This prototype has not been evaluated for behavior change, deployment reach or health outcomes.
 
-### Novelty
+### What makes it different
 
-- **Interval-correct data handling:** forecast values are joined to the challenge interval reference, observation and forecast intervals stay distinct, gaps are retained rather than filled, and the already-applied 1.10 scaling is never repeated.
-- **One authoritative planner:** every new plan is calculated by Go. Offline, the PWA replays an exact saved result rather than inventing a recommendation.
-- **Guarded generative AI:** Gemma explains a plan only on request, its output is checked against the Go-computed evidence, and failures fall back to a labeled deterministic template.
-- **Local-language access:** the full interface and deterministic explanations are available in English, Marathi and Hindi.
-- **Ambient output concept:** a forecast-derived Air Beacon light pattern, designed for an Arduino UNO Q and currently simulated.
+Most air-quality tools stop at a number, map or chart. Mumbai Air Guardian connects:
+
+**Forecast → Evidence → Explanation → Decision → Ambient Signal**
+
+- **Forecast:** the selected challenge artifact provides the quantitative PM2.5 values.
+- **Evidence:** Go joins forecasts to the supplied interval and station data, preserving gaps and source boundaries.
+- **Explanation:** Google Gemma can explain Go-computed evidence when explicitly requested; it does not predict PM2.5.
+- **Decision:** the deterministic Go planner finds a relatively lower-forecast complete activity window.
+- **Ambient signal:** the Air Beacon simulation explores a color-and-pattern representation; physical device control is not implemented.
+
+The interface also supports English, Marathi and Hindi, exact saved-plan replay while offline, and plan sharing.
 
 ### Demonstrated functionality
 
 - **IMPLEMENTED:** display observations and the selected forecast for four stations, with source and interval provenance.
 - **IMPLEMENTED:** show an hourly chart, a tabular alternative, summary bands, and a near-term trajectory.
-- **IMPLEMENTED:** calculate a lowest-forecast complete activity window in Go; an optional preferred start adds a comparison. The signed difference is the recommended mean minus the preferred mean.
+- **IMPLEMENTED:** calculate the lowest-forecast complete activity window in Go; an optional preferred start adds a comparison. The signed difference is the recommended mean minus the preferred mean.
 - **IMPLEMENTED:** restore a validated offline snapshot and replay an exact saved plan without recalculation.
 - **IMPLEMENTED:** English, Marathi, and Hindi interface resources and deterministic explanation fallbacks.
 - **IMPLEMENTED:** share a plan through the operating-system share sheet or copy a plan summary; both were validated manually on Windows.
 - **SIMULATED:** generate a forecast-derived Air Beacon preview and diagnostic pattern in memory; no device is controlled.
-- **OPTIONAL:** a local English Gemma explanation passed the application's checks and was reviewed; failures use a labeled template.
+- **IMPLEMENTED locally:** English Gemma integration and a reviewed generated response through Ollama; runtime availability depends on the local Ollama service. Failure uses a labeled deterministic template.
 
 ### Screenshots
 
@@ -81,7 +107,7 @@ All screenshots were captured from the locally running application; files are in
 **Air Beacon preview (simulation only)** — forecast-derived light pattern; no hardware is controlled.  
 ![Air Beacon preview labeled simulation only, showing station 11611, forecast peak 255.8 µg/m³ Very high, and a three-gentle-pulses pattern](docs/submission-assets/beacon-simulation.png)
 
-**Arduino UNO Q (hardware/setup evidence only)** — the powered board; its lights do not demonstrate control by Air Guardian. The radio-module label is redacted.  
+**Arduino UNO Q (hardware direction / prototype target)** — the powered board is host-recognized only; its lights do not demonstrate control by Air Guardian. The radio-module label is redacted.<br>
 ![Powered Arduino UNO Q board on a desk with its module label covered](docs/submission-assets/uno-q-powered-redacted-v2.jpg)
 
 Marathi and Hindi Air Beacon wording is shown in [`marathi-beacon-review.png`](docs/submission-assets/marathi-beacon-review.png) and [`hindi-beacon-review.png`](docs/submission-assets/hindi-beacon-review.png).
@@ -94,13 +120,17 @@ The Go service loads and validates the pinned local CSV inputs, exposes typed HT
 | --- | --- |
 | Pinned CSV inputs | Observations, interval reference, selected forecast, stations; SHA-256 and row counts checked at startup |
 | Go API | Validation, outlook, activity planner, explanation evidence, beacon payloads |
-| Local Gemma (Ollama) | Optional English plan explanation, validated before display |
+| Local Gemma (Ollama) | User-triggered English explanation; runtime depends on Ollama |
 | Angular PWA | Localized UI, chart/table, sharing, offline snapshot and exact plan replay |
-| Air Beacon | Simulated forecast-derived light pattern; UNO Q integration planned |
+| Air Beacon | Simulated forecast-derived light pattern; physical device control is not implemented |
 
-#### Google Gemma role
+### Google Gemma 4
 
-The application requests English explanations from the local `gemma4:e4b` model through Ollama. After earlier timeouts and invalid output, a revised prompt produced reviewed responses that passed the application's checks through the API and the explicit browser action. One API response took about 16 seconds, within the 30-second limit. These samples do not guarantee future model output; timeouts or failed checks use a labeled template. Deterministic English, Marathi, and Hindi explanations remain available.
+Google Gemma 4 is the grounded explanation layer. The application sends a bounded evidence package, derived from the supplied forecast and deterministic Go calculations, to local `gemma4:e4b` through Ollama only after the user requests an explanation. Gemma does **not** predict or modify PM2.5, select an activity period, create measurements, or replace the planner. An English response has been generated and reviewed locally; future generations are not guaranteed to pass validation. Invalid or timed-out output is replaced with a labeled deterministic template. Gemma generation in Marathi and Hindi is not implemented; those languages use deterministic localized templates.
+
+### ClimateVerse: discovering the context
+
+Project provenance notes record a ClimateVerse India catalogue entry for Open-Meteo (DOI `10.71646/XXOBKO`, version `1.0`); the configuration lists Open-Meteo as the data provider. This is catalogue/discovery metadata, not a runtime ClimateVerse API or evidence that ClimateVerse generated the weather data or the selected PM2.5 forecast. The selected forecast's historical acquisition path through ClimateVerse is unverified. Weather context that cannot be validated remains unavailable.
 
 #### Go role
 
@@ -110,23 +140,19 @@ Go 1.27.4 is the local data-validation and API runtime. It computes activity rec
 
 Angular 22 provides the localized Air Pulse interface, forms, chart/table views, and explicit explanation and beacon actions. The production service worker caches application assets; browser storage supports offline snapshot restoration and exact saved-result replay. The native share flow (operating-system share sheet) and plan-summary copy were validated manually.
 
-A focused interface review used Modern Web Guidance CLI 1.0.0, whose stable release was [announced by Google's Chrome team on 10 November 2026](https://developer.chrome.com/blog/modern-web-guidance-v1). The tool provides web-platform guidance for coding agents; our review scope, checks and limitations are documented in [`docs/MODERN_WEB_REVIEW.md`](docs/MODERN_WEB_REVIEW.md). This is not a claim of a full accessibility audit.
+Modern Web Guidance 1.0, [announced by Google's Chrome team](https://developer.chrome.com/blog/modern-web-guidance-v1), informed the Angular frontend review workflow for modern web-platform patterns, compatibility, accessibility and implementation quality. Findings and limitations are recorded in [`docs/MODERN_WEB_REVIEW.md`](docs/MODERN_WEB_REVIEW.md); this is not a claim of a full accessibility audit or judging points.
 
 #### Forecasting-pipeline role
 
 The application consumes the author's `submission_xgb_corrected_scale_110.csv` forecast output from the competition. It does not retrain the model or run the competition's Python pipeline. The selected output already has 1.10 scaling applied; Air Pulse does not scale it again. Its forecast generation time is unavailable.
 
-#### ClimateVerse role
-
-The source configuration records ClimateVerse catalogue metadata (`10.71646/XXOBKO`, version `1.0`) as metadata-discovery provenance and lists Open-Meteo as the data provider. This is citation/provenance metadata, not a runtime ClimateVerse or weather-service connection. Weather context is disabled and **UNAVAILABLE**.
-
 #### Arduino role
 
-**SIMULATED:** the browser shows a static forecast-derived color marker and pattern description. A bounded v1 payload codec is documented and tested in Go ([`docs/BEACON_PROTOCOL.md`](docs/BEACON_PROTOCOL.md)). Arduino firmware, serial transport, device acknowledgment, and physical-device behavior are **PLANNED/OPTIONAL** and unverified.
+**SIMULATED:** the browser shows a static forecast-derived color marker and pattern description. A bounded v1 payload codec is documented and tested in Go ([`docs/BEACON_PROTOCOL.md`](docs/BEACON_PROTOCOL.md)). Arduino firmware, serial transport, device acknowledgment, and physical-device behavior are **NOT IMPLEMENTED**.
 
-A read-only Windows device-inventory check on 13 November 2026 detected the connected board as a USB composite device identifying as Uno Q, with its CDC serial and ADB interfaces reporting `OK`. This confirms host recognition only: no serial port was opened, no commands were sent, and no firmware was uploaded.
+A read-only Windows device-inventory check on 13 November 2026 detected the connected board as a USB composite device identifying as Uno Q. This confirms host recognition only: no serial port was opened, no commands were sent, and no firmware was uploaded.
 
-### Multilingual support
+### Multilingual experience
 
 The interface and deterministic explanation templates support English, Marathi, and Hindi. The author reviewed the Marathi and Hindi introductions, activity-planning controls, results, deterministic explanations, preferred-time comparison and beacon wording, and approved overall language acceptance on 13 November 2026. Gemma generation is English-only.
 
@@ -161,20 +187,19 @@ Observation and forecast timestamp semantics are documented in [`docs/TIMESTAMP_
 - Arduino firmware and physical transport are not implemented; the Air Beacon is a simulation.
 - The competition data is not redistributed in this repository, so running the app requires obtaining it separately.
 - The interface was built with accessibility in mind and accepted by the author, but it has not received a full professional accessibility audit; 28 automated contrast checks were inconclusive.
-- The application is local-only; there is no public deployment.
+- Weather context is unavailable; the listed ClimateVerse metadata does not establish that it was used to generate or acquire the selected forecast.
 
 ### Two-minute judging pitch
 
-Mumbai Air Guardian is a local prototype for exploring supplied air-quality data without confusing a fixed forecast with live conditions. Its Air Pulse interface presents observations and forecast intervals for four Mumbai stations, preserves missing intervals as gaps, and makes source and timing limitations visible. This matters because a timestamp embedded in a forecast identifier is not enough to determine what hour the value describes.
+“Mumbai Air Guardian asks a question beyond the forecasting challenge: once we can predict air quality, what can someone actually do with that prediction?
 
-The demonstration follows four steps:
+Take Malad West on 12 November. A preferred two-hour window from 08:00 to 10:00 has a mean predicted PM2.5 of 86.15 µg/m³. The deterministic Go planner identifies 15:00 to 17:00 at 52.58 µg/m³, 33.57 µg/m³ lower among the available complete forecast windows.
 
-- **The data:** Forecast values are joined to the supplied interval reference, preserving missing intervals as gaps. The selected artifact is already scaled by 1.10 and is not scaled again.
-- **The math:** Go deterministically finds the lowest-forecast-PM2.5 complete, contiguous activity window. A preferred-time comparison is optional and appears only when requested.
-- **The explanation:** Local Gemma (`gemma4:e4b`) can explain the Go-computed result on request; it never calculates or selects the plan. Its response is checked against the computed evidence, with a labeled deterministic fallback if generation fails validation or times out.
-- **The interface:** The Angular PWA and deterministic explanation templates support English, Marathi, and Hindi. If Go is unavailable, the app can restore a validated local snapshot and replay an exact saved plan; it cannot create a new offline recommendation. Gemma explanations require Ollama to be running.
+Go calculates. AI does not choose the time. Local Google Gemma 4 can explain the evidence when requested, with validation and a deterministic fallback rather than changing the forecast. The interface is available in English, Marathi and Hindi.
 
-Air Beacon is a forecast-derived visual simulation; no physical device is integrated with or controlled by the app. The contribution demonstrated here is careful interval interpretation, transparent provenance, and a reproducible local comparison—not a medical recommendation, a live-monitoring claim, or measured health impact.
+Project metadata records ClimateVerse as a dataset-discovery and provenance reference, separately from Open-Meteo, the listed data provider. The Angular PWA can replay an exact saved plan offline, and the simulated Air Beacon explores an accessible ambient signal.
+
+Mumbai Air Guardian moves from forecast, to evidence, to explanation, to decision, and ultimately to action.”
 
 ## Current capability status
 
@@ -186,13 +211,16 @@ Air Beacon is a forecast-derived visual simulation; no physical device is integr
 | Preferred-time comparison | IMPLEMENTED, optional |
 | New activity calculations when the Go service is offline | UNAVAILABLE |
 | Live air monitoring and forecast issuance timestamp | UNAVAILABLE |
-| User-triggered English, Marathi and Hindi explanations with localized fallbacks | IMPLEMENTED; Gemma generation remains English-only |
-| Validated output from local Gemma | OPTIONAL; English sample verified locally; timeout or invalid output uses a template |
+| User-triggered explanations with deterministic English/Marathi/Hindi templates | IMPLEMENTED |
+| Local Google Gemma integration | IMPLEMENTED; runtime availability depends on Ollama |
+| Verified English Gemma generation | IMPLEMENTED locally; a reviewed sample passed application checks |
+| Gemma Marathi/Hindi generation | NOT IMPLEMENTED |
+| Deterministic English/Marathi/Hindi explanations | IMPLEMENTED |
 | English/Marathi/Hindi interface localization | IMPLEMENTED; wording accepted by the project owner |
 | Offline snapshot storage and exact saved-plan replay | IMPLEMENTED; production browser snapshot restore and exact replay verified |
 | Plan sharing and copy controls | IMPLEMENTED; native share sheet and clipboard copy verified manually on Windows |
 | Air Beacon preview | SIMULATED; no physical device control or serial transport |
-
+| Physical Arduino UNO Q control | NOT IMPLEMENTED; board was host-recognized only |
 When no preferred start time is supplied, the planner returns the lowest-forecast valid period and omits the comparison. The browser does not implement a second planner.
 
 ## Prerequisites
@@ -275,7 +303,7 @@ The variables above use the verified user-local Go 1.27.4 and Node 22.23.5 paths
 - `backend\` — Go ingestion, outlook, planner and HTTP API.
 - `frontend\` — Angular application and tests.
 - `config\` — pinned source and outlook configuration.
-- `docs\` — timestamp, beacon protocol boundary and focused web-accessibility review.
+- `docs\` — timestamp, beacon protocol boundary, focused web review and judge-PDF source.
 - `zindi_artifacts\` — competition inputs (not committed; see [Input data is not included](#input-data-is-not-included)).
 
-The app and demo are local-development artifacts; production hosting and live-data integrations are not included.
+The application uses a fixed local challenge snapshot; live-data integrations are not included. The challenge inputs are excluded from this public repository pending confirmation of redistribution rights.
